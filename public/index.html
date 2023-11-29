@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字节跃动每日签到</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        label, input {
+            display: block;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #4caf50;
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+<h1>字节跃动考勤</h1>
+<form id="checkinForm">
+    <label for="name">姓名：</label>
+    <input type="text" id="name" name="name" required>
+
+    <label for="code">验证码：</label>
+    <input type="text" id="code" name="code" required>
+
+    <button type="button" onclick="submitForm()">签到</button>
+    <button id="downloadButton" style="display: none;" onclick="downloadExcel()">下载今日数据</button>
+
+</form>
+<div id="adminResult"></div> <!-- 显示管理员查询结果的地方 -->
+<script>
+    // 获取当前页面的 URL
+    const currentUrl = window.location;
+
+    // 下载 Excel 按钮的点击事件
+    function downloadExcel() {
+        // 阻止按钮默认行为
+        event.preventDefault();
+
+        // 发送请求下载 Excel 文件
+        window.location.href = `${currentUrl.origin}/export`;
+    }
+
+    function submitForm() {
+        const name = document.getElementById('name').value;
+        const code = document.getElementById('code').value;
+
+        // Check if the name field is empty
+        if (!name) {
+            alert('请填写姓名！');
+            return;
+        }
+
+        // Make a POST request to the server with the form data
+        fetch(`${currentUrl.origin}/checkin`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name, code }),
+        })
+            .then(response => response.text())
+            .then(message => {
+                alert(message);
+                // 如果是管理员，显示下载按钮
+                if (message === '欢迎！管理员页面') {
+                    document.getElementById('downloadButton').style.display = 'block';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    // 处理管理员查询结果的函数
+    function handleAdminResult(result) {
+        // 显示在页面下方
+        document.getElementById('adminResult').innerHTML = result;
+
+        // 如果是管理员，显示下载按钮
+        if (result === '欢迎！管理员页面') {
+            document.getElementById('downloadButton').style.display = 'block';
+        }
+    }
+
+    // 显示管理员查询结果的函数
+    function displayAdminResult() {
+        // 获取管理员查询结果
+        fetch(`${currentUrl.origin}/checkin`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ code: adminCode }),
+        })
+            .then(response => response.json())
+            .then(result => handleAdminResult(JSON.stringify(result)))
+            .catch(error => console.error('Error:', error));
+    }
+
+</script>
+</body>
+</html>

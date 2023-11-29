@@ -1,0 +1,5 @@
+CREATE TABLE `xxrk` (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255),
+  checkInTime DATETIME
+);
