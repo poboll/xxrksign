@@ -13,7 +13,9 @@
     <style>
         /* CSS styles */
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
             padding: 20px;
             margin: 0;
             display: flex;
@@ -23,6 +25,7 @@
         }
 
         h1 {
+            margin-top: 40px;
             text-align: center;
         }
 
@@ -31,12 +34,22 @@
             width: 100%;
         }
 
-        label,
-        input {
+        label{
             display: block;
             margin-bottom: 10px;
             width: 100%;
             height: 35px; /* Adjusted height */
+        }
+
+        input {
+            display: block;
+            margin-bottom: 10px;
+            height: 35px;
+            box-sizing: border-box;
+            width: 100%;
+            padding: 8px; /* 调整输入框的内边距 */
+            border: 1px solid #ddd; /* 添加边框 */
+            border-radius: 4px;
         }
 
         button {
@@ -47,6 +60,7 @@
             cursor: pointer;
             width: 100%;
             margin: 10px auto 0;
+            border-radius: 5px;
         }
 
         button:hover {
@@ -56,18 +70,24 @@
         #adminResult {
             margin-top: 20px;
         }
+
+        /* 禁用放大效果 */
+        input, select, textarea {
+            text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+        }
     </style>
 </head>
 <body>
 <h1>字节悦动签到</h1>
 <form id="checkinForm">
-    <label for="name">昵称：</label>
+    <label for="name">微信号：</label>
     <input type="text" id="name" name="name" required>
 
     <label for="code">签到码：</label>
     <input type="text" id="code" name="code" required>
 
-    <button type="button" onclick="submitForm()">签到</button>
+    <button type="button" id="signInButton" onclick="submitForm()">签到</button>
     <button type="button" id="downloadButton" style="display: none;" onclick="downloadExcel()">下载今日数据</button>
     <button type="button" id="dailyButton" style="display: none;" onclick="dailyExcel()">导出签到情况</button>
     <button type="button" id="updateButton" style="display: none;" onclick="updateCode()">更新签到码</button>
@@ -133,10 +153,12 @@
         const name = document.getElementById('name').value;
         const code = document.getElementById('code').value;
 
-        // Check if the name field is empty
-        if (!name) {
-            alert('请填写姓名！');
-            return;
+        if(code != 'adminx'){
+            // Check if the name field is empty
+            if (!name) {
+                alert('请填写姓名！');
+                return;
+            }
         }
 
         // Make a POST request to the server with the form data
@@ -152,6 +174,10 @@
                 alert(message);
                 // 如果是管理员，显示下载按钮
                 if (message === '欢迎！管理员页面') {
+                    document.oncontextmenu = null;
+                    // 隐藏签到按钮
+                    document.getElementById('signInButton').style.display = 'none';
+                    // 显示功能按钮
                     document.getElementById('downloadButton').style.display = 'block';
                     document.getElementById('dailyButton').style.display = 'block';
                     document.getElementById('updateButton').style.display = 'block';
