@@ -70,7 +70,7 @@ function ipv6ToV4(ip) {
 // 修改的打卡按钮路由
 app.post('/checkin', async (req, res) => {
     const { name, code } = req.body;
-    const ipAddress =  getClientIp(req); // Use getClientIp function to get IP address
+    const ipAddress = getClientIp(req); // Use getClientIp function to get IP address
 
     // 检查管理员验证码
     if (code === adminCode) {
@@ -94,15 +94,18 @@ app.post('/checkin', async (req, res) => {
             console.error('查询前10名员工时出错：', error);
             return res.status(500).send('内部服务器错误');
         } finally {
-            connection.end();
+            // 在 try 块中成功执行 SQL 查询后关闭连接
+            if (connection) {
+                connection.end();
+            }
         }
     }
 
     // 查询验证码是否存在且有效
-    const connection = await createConnection();
+    let connectionForCode = await createConnection();
 
     try {
-        const [yzmData] = await connection.query(`
+        const [yzmData] = await connectionForCode.query(`
             SELECT Code, ExpirationTime
             FROM yzm
             WHERE Code = ?;
@@ -127,7 +130,10 @@ app.post('/checkin', async (req, res) => {
         console.error('查询验证码时出错：', error);
         return res.status(500).send('内部服务器错误');
     } finally {
-        connection.end();
+        // 在 try 块中成功执行 SQL 查询后关闭连接
+        if (connectionForCode) {
+            connectionForCode.end();
+        }
     }
 
     // 检查 IP 是否存在于数据库中
@@ -147,7 +153,10 @@ app.post('/checkin', async (req, res) => {
         console.error('查询IP地址时出错：', error);
         return res.status(500).send('内部服务器错误');
     } finally {
-        ipConnection.end();
+        // 在 try 块中成功执行 SQL 查询后关闭连接
+        if (ipConnection) {
+            ipConnection.end();
+        }
     }
 
     // 查询员工是否在当天已签到
@@ -180,12 +189,12 @@ app.post('/checkin', async (req, res) => {
         console.error('处理打卡请求时出错：', error);
         return res.status(500).send('内部服务器错误');
     } finally {
+        // 在 try 块中成功执行 SQL 查询后关闭连接
         if (connectionForCheckin) {
-            connectionForCheckin.end(); // 关闭连接
+            connectionForCheckin.end();
         }
     }
 });
-
 
 // 导出当天打卡情况到Excel
 app.get('/export', async (req, res) => {
