@@ -39,7 +39,7 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.ht
 
 // 管理员验证码
 const adminCode = process.env.ADMIN_CODE || 'admin-xxrk';
-const userCode = process.env.ADMIN_CODE || 'xxrk';
+const userCode = process.env.USER_CODE || 'xxrk';
 
 // 打卡按钮路由
 app.post('/checkin', async (req, res) => {
@@ -165,25 +165,24 @@ app.get('/export', async (req, res) => {
             worksheet.addRow([employee.name, employee.checkInTime]);
         });
 
-        // 生成Excel文件
+        // 设置文件名
         const dateStr = today.toISOString().split('T')[0];
-        const excelFilePath = `checkin_data_${dateStr}.xlsx`;
-        await workbook.xlsx.writeFile(excelFilePath);
+        const excelFileName = `checkin_data_${dateStr}.xlsx`;
 
-        // 返回生成的Excel文件
-        res.download(excelFilePath, (err) => {
-            if (err) {
-                console.error(err);
+        // 设置下载头
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${excelFileName}"`);
+
+        // 将工作簿内容发送到响应
+        workbook.xlsx.write(res)
+            .then(() => {
+                // 结束响应
+                res.end();
+            })
+            .catch((error) => {
+                console.error('生成Excel文件时出错：', error);
                 return res.status(500).send('内部服务器错误');
-            }
-
-            // 删除生成的Excel文件
-            require('fs').unlink(excelFilePath, (err) => {
-                if (err) {
-                    console.error(err);
-                }
             });
-        });
     } catch (error) {
         console.error('查询当天打卡记录时出错：', error);
         return res.status(500).send('内部服务器错误');
