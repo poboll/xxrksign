@@ -191,6 +191,80 @@ app.get('/export', async (req, res) => {
     }
 });
 
+// 后端路由
+app.get('/top-employees', async (req, res) => {
+    const connection = await createConnection();
+
+    try {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+
+        const [rows] = await connection.query(`
+            SELECT name, COUNT(*) as count
+            FROM employees
+            WHERE checkInTime >= ?
+            GROUP BY name
+            ORDER BY count DESC
+            LIMIT 10;
+        `, [startOfMonth]);
+
+        // 将前10名员工信息发送给前端
+        res.json(rows);
+    } catch (error) {
+        console.error('查询前10名员工时出错：', error);
+        return res.status(500).send('内部服务器错误');
+    } finally {
+        connection.end();
+    }
+});
+
+// 导出全部签到数据到Excel
+app.get('/export-all', async (req, res) => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('AllCheckInData');
+
+    // 添加表头
+    worksheet.addRow(['Name', 'Check-in Time']);
+
+    // 查询所有打卡记录
+    const connection = await createConnection();
+
+    try {
+        const [allEmployees] = await connection.query(`
+            SELECT name, checkInTime
+            FROM employees
+        `);
+
+        // 添加所有打卡记录到Excel
+        allEmployees.forEach((employee) => {
+            worksheet.addRow([employee.name, employee.checkInTime]);
+        });
+
+        // 设置文件名
+        const excelFileName = 'all_checkin_data.xlsx';
+
+        // 设置下载头
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${excelFileName}"`);
+
+        // 将工作簿内容发送到响应
+        workbook.xlsx.write(res)
+            .then(() => {
+                // 结束响应
+                res.end();
+            })
+            .catch((error) => {
+                console.error('生成Excel文件时出错：', error);
+                return res.status(500).send('内部服务器错误');
+            });
+    } catch (error) {
+        console.error('查询所有打卡记录时出错：', error);
+        return res.status(500).send('内部服务器错误');
+    } finally {
+        connection.end();
+    }
+});
+
 // 启动服务器
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

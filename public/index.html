@@ -5,6 +5,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>字节悦动每日签到</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <!-- 使用 .png 格式的图标 -->
+    <!-- <link rel="icon" href="favicon.png" type="image/png"> -->
+    <!-- 使用 .svg 格式的图标 -->
+    <!-- <link rel="icon" href="favicon.svg" type="image/svg+xml"> -->
     <style>
         /* CSS styles */
         body {
@@ -66,7 +71,10 @@
     <button id="downloadButton" style="display: none;" onclick="downloadExcel()">下载今日数据</button>
 </form>
 
-<div id="adminResult"></div> <!-- 显示管理员查询结果的地方 -->
+<div id="adminResult"></div> <!-- 显示管理员下载按钮 -->
+
+<div id="topEmployees"></div><!-- 显示前10名员工 -->
+
 <script>
     // 获取当前页面的 URL
     const currentUrl = window.location;
@@ -104,34 +112,23 @@
                 // 如果是管理员，显示下载按钮
                 if (message === '欢迎！管理员页面') {
                     document.getElementById('downloadButton').style.display = 'block';
+                    displayTopEmployees();
                 }
             })
             .catch(error => console.error('Error:', error));
     }
 
-    // 处理管理员查询结果的函数
-    function handleAdminResult(result) {
-        // 显示在页面下方
-        document.getElementById('adminResult').innerHTML = result;
-
-        // 如果是管理员，显示下载按钮
-        if (result === '欢迎！管理员页面') {
-            document.getElementById('downloadButton').style.display = 'block';
-        }
-    }
-
-    // 显示管理员查询结果的函数
-    function displayAdminResult() {
-        // 获取管理员查询结果
-        fetch(`${currentUrl.origin}/checkin`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ code: adminCode }),
-        })
+    function displayTopEmployees() {
+        // 发起获取前10名员工的请求
+        fetch('/top-employees')
             .then(response => response.json())
-            .then(result => handleAdminResult(JSON.stringify(result)))
+            .then(data => {
+                // 处理返回的数据，这里假设数据是一个数组
+                const topEmployees = data.map(employee => `${employee.name}: ${employee.count}次`);
+
+                // 将前10名员工信息显示在页面上
+                document.getElementById('topEmployees').innerHTML = `<p>${topEmployees.join('<br>')}</p>`;
+            })
             .catch(error => console.error('Error:', error));
     }
 
