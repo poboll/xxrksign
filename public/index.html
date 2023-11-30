@@ -4,34 +4,54 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>字节跃动每日签到</title>
+    <title>字节悦动每日签到</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
+            margin: 0; /* Remove default margin */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh; /* 100% of viewport height */
         }
+
+        h1 {
+            text-align: center;
+        }
+
         form {
-            max-width: 400px;
-            margin: 0 auto;
+            max-width: 300px;
+            width: 100%; /* Take full width on smaller screens */
         }
+
         label, input {
             display: block;
             margin-bottom: 10px;
+            width: 100%; /* Take full width */
         }
+
         button {
             background-color: #4caf50;
             color: white;
             padding: 10px;
             border: none;
             cursor: pointer;
+            width: 100%; /* Adjusted width */
+            margin: 10px auto 0; /* Center the button */
         }
+
         button:hover {
             background-color: #45a049;
+        }
+
+        #adminResult {
+            margin-top: 20px; /* Add some space between the form and result */
         }
     </style>
 </head>
 <body>
-<h1>字节跃动考勤</h1>
+<h1>字节悦动考勤</h1>
 <form id="checkinForm">
     <label for="name">姓名：</label>
     <input type="text" id="name" name="name" required>
@@ -41,8 +61,8 @@
 
     <button type="button" onclick="submitForm()">签到</button>
     <button id="downloadButton" style="display: none;" onclick="downloadExcel()">下载今日数据</button>
-
 </form>
+
 <div id="adminResult"></div> <!-- 显示管理员查询结果的地方 -->
 <script>
     // 获取当前页面的 URL
