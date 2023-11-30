@@ -68,7 +68,7 @@
     <input type="text" id="code" name="code" required>
 
     <button type="button" onclick="submitForm()">签到</button>
-    <button id="downloadButton" style="display: none;" onclick="downloadExcel()">下载今日数据</button>
+    <button type="button" id="downloadButton" style="display: none;" onclick="downloadExcel()">下载今日数据</button>
 </form>
 
 <div id="adminResult"></div> <!-- 显示管理员下载按钮 -->
@@ -76,6 +76,37 @@
 <div id="topEmployees"></div><!-- 显示前10名员工 -->
 
 <script>
+    // 检测是否打开了控制台
+    function detectDevTools() {
+        const isOpen = /./;
+        isOpen.toString = function () {
+            debugger;
+            return false;
+        };
+
+        console.log('%c', isOpen);
+    }
+
+    // 执行检测
+    detectDevTools();
+
+    document.onkeydown = function(event) {
+        if (event.keyCode === 123) {
+            return false;
+        }
+    }
+
+    document.oncontextmenu = function(event) {
+        event.preventDefault();
+        return false;
+    }
+
+    console.log = function() {};
+    // console.warn = function() {};
+    console.error = function() {};
+    // 在控制台中输出警告
+    console.warn('%c警告：请不要在此控制台中输入任何代码，这可能会导致安全风险！', 'color: red; font-size: 16px; font-weight: bold;');
+
     // 获取当前页面的 URL
     const currentUrl = window.location;
 
@@ -131,6 +162,19 @@
             })
             .catch(error => console.error('Error:', error));
     }
+
+    // 监听输入框的回车事件
+    document.getElementById('name').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            document.getElementById('code').focus();
+        }
+    });
+
+    document.getElementById('code').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            submitForm();
+        }
+    });
 
 </script>
 </body>
