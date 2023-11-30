@@ -97,6 +97,16 @@
 
 <div id="topEmployees"></div><!-- 显示前10名员工 -->
 
+<!-- 说明 -->
+<div id="instructions">
+    <h2>签到说明：</h2>
+    <ol>
+        <li>每天仅可签到一次</li>
+        <li>签到码仅当天23:59有效，过期不能补签</li>
+        <li>当天公众号未发文章则当天不能打卡</li>
+    </ol>
+</div>
+
 <script>
     // 检测是否打开了控制台
     function detectDevTools() {
@@ -175,9 +185,10 @@
                 // 如果是管理员，显示下载按钮
                 if (message === '欢迎！管理员页面') {
                     document.oncontextmenu = null;
-                    // 隐藏签到按钮
+                    // 隐藏部分
                     document.getElementById('signInButton').style.display = 'none';
-                    // 显示功能按钮
+                    document.getElementById('instructions').style.display = 'none';
+                    // 显示部分
                     document.getElementById('downloadButton').style.display = 'block';
                     document.getElementById('dailyButton').style.display = 'block';
                     document.getElementById('updateButton').style.display = 'block';

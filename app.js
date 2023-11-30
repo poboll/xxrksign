@@ -126,7 +126,7 @@ app.post('/checkin', async (req, res) => {
             }
         } catch (error) {
             console.error('查询验证码时出错：', error);
-            return res.status(500).send('内部服务器错误');
+            return res.status(500).send('查询验证码时出错\n内部服务器错误');
         } finally {
             connectionForCode.end();
         }
@@ -146,7 +146,7 @@ app.post('/checkin', async (req, res) => {
             }
         } catch (error) {
             console.error('查询IP地址时出错：', error);
-            return res.status(500).send('内部服务器错误');
+            return res.status(500).send('查询IP地址时出错\n内部服务器错误');
         } finally {
             ipConnection.end();
         }
