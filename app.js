@@ -79,14 +79,17 @@ app.post('/checkin', async (req, res) => {
         const [yzmData] = await connection.query(`
             SELECT Code, ExpirationTime
             FROM yzm
-            WHERE Code = ? AND ExpirationTime > NOW();
+            WHERE Code = ?;
         `, [code]);
 
+        // Check if the verification code exists
         if (yzmData.length === 0) {
             return res.status(403).send('验证码无效！');
         }
 
-        if (yzmData[0].Expiration <= new Date()) {
+        // Check if the verification code has expired
+        const expirationTime = new Date(yzmData[0].ExpirationTime);
+        if (expirationTime <= new Date()) {
             return res.status(403).send('验证码已过期！');
         }
 
@@ -259,6 +262,104 @@ app.get('/export-all', async (req, res) => {
             });
     } catch (error) {
         console.error('查询所有打卡记录时出错：', error);
+        return res.status(500).send('内部服务器错误');
+    } finally {
+        connection.end();
+    }
+});
+
+// 导出每天签到情况到Excel
+app.get('/export-daily', async (req, res) => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('DailyCheckInData');
+
+    // 查询所有员工
+    const connection = await createConnection();
+
+    try {
+        const [employees] = await connection.query(`
+            SELECT DISTINCT name
+            FROM employees
+        `);
+
+        // 添加表头
+        worksheet.addRow(['Name', ...Array.from({ length: 31 }, (_, i) => i + 1)]);
+
+        // 查询每天的签到情况
+        for (const employee of employees) {
+            const [checkInData] = await connection.query(`
+                SELECT DAY(checkInTime) as day
+                FROM employees
+                WHERE name = ?
+            `, [employee.name]);
+
+            const row = Array(31).fill('缺卡'); // 默认为缺卡
+
+            for (const record of checkInData) {
+                const day = record.day;
+                row[day - 1] = '签到';
+            }
+
+            worksheet.addRow([employee.name, ...row]);
+        }
+
+        // 生成Excel文件
+        const excelFileName = 'daily_checkin_data.xlsx';
+        await workbook.xlsx.writeFile(excelFileName);
+
+        // 设置下载头
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${excelFileName}"`);
+
+        // 将工作簿内容发送到响应
+        workbook.xlsx.write(res)
+            .then(() => {
+                // 结束响应
+                res.end();
+            })
+            .catch((error) => {
+                console.error('生成Excel文件时出错：', error);
+                return res.status(500).send('内部服务器错误');
+            });
+    } catch (error) {
+        console.error('查询员工时出错：', error);
+        return res.status(500).send('内部服务器错误');
+    } finally {
+        connection.end();
+    }
+});
+
+// 新增一个路由用于生成验证码
+app.post('/generate-code', async (req, res) => {
+    const { code } = req.body;
+
+    // 检查是否已存在相同的验证码
+    const connection = await createConnection();
+
+    try {
+        const [existingCode] = await connection.query(`
+            SELECT Code
+            FROM yzm
+            WHERE Code = ?;
+        `, [code]);
+
+        if (existingCode.length > 0) {
+            return res.status(400).send('相同的验证码已存在！');
+        }
+
+        // 获取当前日期
+        const currentDate = new Date().toISOString().split('T')[0];
+
+        // 插入验证码记录
+        const expirationTime = new Date();
+        expirationTime.setDate(expirationTime.getDate() );//+1
+        expirationTime.setHours(23, 59, 59, 999);
+
+        await connection.execute('INSERT INTO yzm (Code, Date, IsUsed, ExpirationTime) VALUES (?, ?, DEFAULT, ?)', [code, currentDate, expirationTime]);
+
+        return res.send('验证码已生成并插入数据库！');
+    } catch (error) {
+        console.error('生成验证码时出错：', error);
         return res.status(500).send('内部服务器错误');
     } finally {
         connection.end();
