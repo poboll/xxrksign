@@ -38,7 +38,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 // 管理员验证码
-const adminCode = process.env.ADMIN_CODE || 'admin-xxrk';
+const adminCode = process.env.ADMIN_CODE || 'adminx';
 const userCode = process.env.USER_CODE || 'xxrk';
 
 // 打卡按钮路由
@@ -333,6 +333,11 @@ app.get('/export-daily', async (req, res) => {
 app.post('/generate-code', async (req, res) => {
     const { code } = req.body;
 
+    // 检查是否是管理员 code
+    if (code == 'adminx') {
+        return res.status(403).send('此为管理员页面，请输入你想要设置新的校验码！');
+    }
+
     // 检查是否已存在相同的验证码
     const connection = await createConnection();
 
@@ -352,7 +357,7 @@ app.post('/generate-code', async (req, res) => {
 
         // 插入验证码记录
         const expirationTime = new Date();
-        expirationTime.setDate(expirationTime.getDate() );//+1
+        expirationTime.setDate(expirationTime.getDate());// + 1
         expirationTime.setHours(23, 59, 59, 999);
 
         await connection.execute('INSERT INTO yzm (Code, Date, IsUsed, ExpirationTime) VALUES (?, ?, DEFAULT, ?)', [code, currentDate, expirationTime]);
