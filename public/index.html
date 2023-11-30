@@ -6,14 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>字节悦动每日签到</title>
     <style>
+        /* CSS styles */
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
-            margin: 0; /* Remove default margin */
+            margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            height: 100vh; /* 100% of viewport height */
+            height: 100vh;
         }
 
         h1 {
@@ -22,13 +23,15 @@
 
         form {
             max-width: 300px;
-            width: 100%; /* Take full width on smaller screens */
+            width: 100%;
         }
 
-        label, input {
+        label,
+        input {
             display: block;
             margin-bottom: 10px;
-            width: 100%; /* Take full width */
+            width: 100%;
+            height: 35px; /* Adjusted height */
         }
 
         button {
@@ -37,8 +40,8 @@
             padding: 10px;
             border: none;
             cursor: pointer;
-            width: 100%; /* Adjusted width */
-            margin: 10px auto 0; /* Center the button */
+            width: 100%;
+            margin: 10px auto 0;
         }
 
         button:hover {
@@ -46,17 +49,17 @@
         }
 
         #adminResult {
-            margin-top: 20px; /* Add some space between the form and result */
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-<h1>字节悦动考勤</h1>
+<h1>字节悦动签到</h1>
 <form id="checkinForm">
     <label for="name">姓名：</label>
     <input type="text" id="name" name="name" required>
 
-    <label for="code">验证码：</label>
+    <label for="code">签到码：</label>
     <input type="text" id="code" name="code" required>
 
     <button type="button" onclick="submitForm()">签到</button>
