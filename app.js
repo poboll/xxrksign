@@ -16,6 +16,7 @@ const createConnection = async () => {
             user: process.env.MYSQL_USER || 'root',
             password: process.env.MYSQL_PASSWORD || 'y498g30fkoN6',
             database: process.env.MYSQL_DATABASE || 'xxrk',
+            connectionLimit: 10, // Adjust as needed
         });
         return connection;
     } catch (error) {
@@ -25,6 +26,7 @@ const createConnection = async () => {
 };
 
 // 中间件配置
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(session({
@@ -41,10 +43,34 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.ht
 const adminCode = process.env.ADMIN_CODE || 'adminx';
 const userCode = process.env.USER_CODE || 'xxrk';
 
-// 打卡按钮路由
+/**
+ * @method 获取客户端IP地址
+ * @param {string} req 传入请求HttpRequest
+ * 客户请求的IP地址存在于request对象当中
+ * express框架可以直接通过 req.ip 获取
+ */
+function getClientIp(req) {
+    return req.headers['x-forwarded-for'] ||
+        req.ip ||
+        req.connection.remoteAddress ||
+        req.socket.remoteAddress ||
+        req.connection.socket.remoteAddress ||
+        '';
+}
+
+// 上述代码是直接获取的IPV4地址，如果获取到的是IPV6，则通过字符串的截取来转换为IPV4地址。
+function ipv6ToV4(ip) {
+    if(ip.split(',').length>0){
+        ip = ip.split(',')[0]
+    }
+    ip = ip.substr(ip.lastIndexOf(':')+1,ip.length);
+    return ip
+}
+
+// 修改的打卡按钮路由
 app.post('/checkin', async (req, res) => {
     const { name, code } = req.body;
-    const ipAddress = req.ip;  // 使用 req.ip 获取真实 IP 地址
+    const ipAddress =  getClientIp(req); // Use getClientIp function to get IP address
 
     // 检查管理员验证码
     if (code === adminCode) {
@@ -104,18 +130,34 @@ app.post('/checkin', async (req, res) => {
         connection.end();
     }
 
-    // ip相同拒绝打卡请求
-    if (req.session[ipAddress]) {
-        return res.status(403).send('您的IP今天已签到，请勿重复签到！');
+    // 检查 IP 是否存在于数据库中
+    let ipConnection = await createConnection();
+
+    try {
+        const [ipData] = await ipConnection.query(`
+            SELECT id
+            FROM ip_addresses
+            WHERE ip_address = ?;
+        `, [ipAddress]);
+
+        if (ipData.length > 0) {
+            return res.status(403).send('您的IP今天已签到，请勿重复签到！');
+        }
+    } catch (error) {
+        console.error('查询IP地址时出错：', error);
+        return res.status(500).send('内部服务器错误');
+    } finally {
+        ipConnection.end();
     }
 
     // 查询员工是否在当天已签到
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const connectionForCheckin = await createConnection();  // 使用新的连接
+    let connectionForCheckin;
 
     try {
+        connectionForCheckin = await createConnection(); // 使用新的连接
         const [existingCheckin] = await connectionForCheckin.query(`
             SELECT COUNT(*) as count
             FROM employees
@@ -130,17 +172,20 @@ app.post('/checkin', async (req, res) => {
         const checkInTime = new Date();
         await connectionForCheckin.execute('INSERT INTO employees (name, checkInTime) VALUES (?, ?)', [name, checkInTime]);
 
-        // 保存IP地址，限制一天内只能打卡一次
-        req.session[ipAddress] = true;
+        // 将 IP 地址插入数据库
+        await ipConnection.execute('INSERT INTO ip_addresses (ip_address) VALUES (?)', [ipAddress]);
 
         return res.send('打卡成功！');
     } catch (error) {
         console.error('处理打卡请求时出错：', error);
         return res.status(500).send('内部服务器错误');
     } finally {
-        connectionForCheckin.end();
+        if (connectionForCheckin) {
+            connectionForCheckin.end(); // 关闭连接
+        }
     }
 });
+
 
 // 导出当天打卡情况到Excel
 app.get('/export', async (req, res) => {
@@ -369,6 +414,12 @@ app.post('/generate-code', async (req, res) => {
     } finally {
         connection.end();
     }
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Unexpected error:', err);
+    res.status(500).send('Internal Server Error');
 });
 
 // 启动服务器
