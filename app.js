@@ -16,7 +16,6 @@ const createConnection = async () => {
             user: process.env.MYSQL_USER || 'root',
             password: process.env.MYSQL_PASSWORD || 'y498g30fkoN6',
             database: process.env.MYSQL_DATABASE || 'xxrk',
-            connectionLimit: 10, // Adjust as needed
         });
         return connection;
     } catch (error) {
@@ -78,6 +77,7 @@ app.post('/checkin', async (req, res) => {
             // 查询当月打卡次数最多的前10名员工
             const startOfMonth = new Date();
             startOfMonth.setDate(1);
+
             const connection = await createConnection();
 
             try {
@@ -99,11 +99,11 @@ app.post('/checkin', async (req, res) => {
             }
         }
 
-        // 查询验证码是否存在且有效
-        let connectionForCode = await createConnection();
+        // 查询验证码是否存在且有效，以及 IP 是否存在于数据库中
+        let connectionForCodeAndIP = await createConnection();
 
         try {
-            const [yzmData] = await connectionForCode.query(`
+            const [yzmData] = await connectionForCodeAndIP.query(`
                 SELECT Code, ExpirationTime
                 FROM yzm
                 WHERE Code = ?;
@@ -124,18 +124,9 @@ app.post('/checkin', async (req, res) => {
             if (code !== yzmData[0].Code) {
                 return res.status(403).send('验证码不正确！');
             }
-        } catch (error) {
-            console.error('查询验证码时出错：', error);
-            return res.status(500).send('查询验证码时出错\n内部服务器错误');
-        } finally {
-            connectionForCode.end();
-        }
 
-        // 检查 IP 是否存在于数据库中
-        let ipConnection = await createConnection();
-
-        try {
-            const [ipData] = await ipConnection.query(`
+            // Check if the IP exists in the database
+            const [ipData] = await connectionForCodeAndIP.query(`
                 SELECT id
                 FROM ip_addresses
                 WHERE ip_address = ?;
@@ -145,10 +136,10 @@ app.post('/checkin', async (req, res) => {
                 return res.status(403).send('您的IP今天已签到，请勿重复签到！');
             }
         } catch (error) {
-            console.error('查询IP地址时出错：', error);
-            return res.status(500).send('查询IP地址时出错\n内部服务器错误');
+            console.error('查询验证码或IP地址时出错：', error);
+            return res.status(500).send('查询验证码或IP地址时出错\n内部服务器错误');
         } finally {
-            ipConnection.end();
+            connectionForCodeAndIP.end();
         }
 
         // 查询员工是否在当天已签到
@@ -170,17 +161,25 @@ app.post('/checkin', async (req, res) => {
 
             // 保存打卡记录
             const checkInTime = new Date();
+            // 检查连接是否仍然是打开状态
+            if (connectionForCheckin.state === 'disconnected') {
+                throw new Error('数据库连接已关闭');
+            }
+
             await connectionForCheckin.execute('INSERT INTO employees (name, checkInTime) VALUES (?, ?)', [name, checkInTime]);
 
             // 将 IP 地址插入数据库
-            await ipConnection.execute('INSERT INTO ip_addresses (ip_address) VALUES (?)', [ipAddress]);
+            await connectionForCheckin.execute('INSERT INTO ip_addresses (ip_address) VALUES (?)', [ipAddress]);
 
             return res.send('打卡成功！');
         } catch (error) {
             console.error('处理打卡请求时出错：', error);
             return res.status(500).send('内部服务器错误');
         } finally {
-            connectionForCheckin.end();
+            // 在 finally 中添加对连接状态的检查
+            if (connectionForCheckin && connectionForCheckin.state !== 'disconnected') {
+                connectionForCheckin.end();
+            }
         }
     } catch (error) {
         console.error('处理打卡请求时出错：', error);
