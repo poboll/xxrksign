@@ -125,16 +125,17 @@ app.post('/checkin', async (req, res) => {
                 return res.status(403).send('验证码不正确！');
             }
 
-            // Check if the IP exists in the database
+            // 查询 IP 地址是否已签到
             const [ipData] = await connectionForCodeAndIP.query(`
-                SELECT id
+                SELECT id, created_at
                 FROM ip_addresses
-                WHERE ip_address = ?;
+                WHERE ip_address = ? AND DATE(created_at) = CURDATE();
             `, [ipAddress]);
 
             if (ipData.length > 0) {
                 return res.status(403).send('您的IP今天已签到，请勿重复签到！');
             }
+
         } catch (error) {
             console.error('查询验证码或IP地址时出错：', error);
             return res.status(500).send('查询验证码或IP地址时出错\n内部服务器错误');
