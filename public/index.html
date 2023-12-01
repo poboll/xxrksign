@@ -102,8 +102,8 @@
     <h2>签到说明：</h2>
     <ol>
         <li>每天每人每个手机仅可签到一次</li>
-        <li>签到码仅当天23:59有效，过期不能补签</li>
-        <li>当天公众号未发文章则当天不能打卡</li>
+        <li>签到码仅当天23:59前有效，过期不能补签</li>
+        <li>当天公众号未发文章则当天不能签到</li>
     </ol>
 </div>
 
@@ -159,6 +159,21 @@
         window.location.href = `${currentUrl.origin}/export-all`;
     }
 
+    // 在页面加载时检查是否存在保存的姓名，并将其设置到输入框中
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedName = localStorage.getItem('savedName');
+        if (savedName) {
+            document.getElementById('name').value = savedName;
+        }
+    });
+
+    // 监听姓名输入框的变化，并保存到localStorage中
+    document.getElementById('name').addEventListener('input', function(event) {
+        const nameValue = event.target.value;
+        localStorage.setItem('savedName', nameValue);
+    });
+
+    // 提交表单时清除保存的姓名，以避免保存无关信息
     function submitForm() {
         const name = document.getElementById('name').value;
         const code = document.getElementById('code').value;
@@ -170,6 +185,9 @@
                 return;
             }
         }
+
+        // 清除保存的姓名
+        // localStorage.removeItem('savedName');
 
         // Make a POST request to the server with the form data
         fetch(`${currentUrl.origin}/checkin`, {
