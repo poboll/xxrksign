@@ -162,6 +162,9 @@ app.post('/checkin', async (req, res) => {
 
             // 保存打卡记录
             const checkInTime = new Date();
+            // 将checkInTime增加8个小时
+            // checkInTime.setHours(checkInTime.getHours() + 8);
+
             // 检查连接是否仍然是打开状态
             if (connectionForCheckin.state === 'disconnected') {
                 throw new Error('数据库连接已关闭');
@@ -169,8 +172,8 @@ app.post('/checkin', async (req, res) => {
 
             await connectionForCheckin.execute('INSERT INTO employees (name, checkInTime) VALUES (?, ?)', [name, checkInTime]);
 
-            // 将 IP 地址插入数据库
-            await connectionForCheckin.execute('INSERT INTO ip_addresses (ip_address) VALUES (?)', [ipAddress]);
+            // 将 IP 地址插入数据库，并将 created_at 转换为 'Asia/Shanghai' 时区
+            await connectionForCheckin.execute('INSERT INTO ip_addresses (ip_address, created_at) VALUES (?, CONVERT_TZ(NOW(), "+00:00", "+08:00"))', [ipAddress]);
 
             return res.send('打卡成功！');
         } catch (error) {
