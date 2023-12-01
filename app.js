@@ -420,6 +420,31 @@ app.post('/generate-code', async (req, res) => {
     }
 });
 
+// 近七天的打卡总人数
+app.get('/recent-checkin-count', async (req, res) => {
+    const connection = await createConnection();
+
+    try {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+
+        const [rows] = await connection.query(`
+            SELECT DATE(checkInTime) as date, COUNT(DISTINCT name) as count
+            FROM employees
+            WHERE checkInTime >= ?
+            GROUP BY date
+            ORDER BY date;
+        `, [sevenDaysAgo]);
+
+        res.json(rows);
+    } catch (error) {
+        console.error('查询近七天打卡总人数时出错：', error);
+        return res.status(500).send('内部服务器错误');
+    } finally {
+        connection.end();
+    }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Unexpected error:', err);

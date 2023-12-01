@@ -10,6 +10,9 @@
     <!-- <link rel="icon" href="favicon.png" type="image/png"> -->
     <!-- 使用 .svg 格式的图标 -->
     <!-- <link rel="icon" href="favicon.svg" type="image/svg+xml"> -->
+    <!-- Google AdSense script -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3814113711823516"
+            crossorigin="anonymous"></script>
     <style>
         /* CSS styles */
         body {
@@ -94,7 +97,7 @@
 </form>
 
 <div id="adminResult"></div> <!-- 显示管理员下载按钮 -->
-
+<div id="recentCheckinCount"></div><!-- 在页面上显示近七天打卡总人数 -->
 <div id="topEmployees"></div><!-- 显示前10名员工 -->
 
 <!-- 说明 -->
@@ -210,14 +213,29 @@
                     document.getElementById('downloadButton').style.display = 'block';
                     document.getElementById('dailyButton').style.display = 'block';
                     document.getElementById('updateButton').style.display = 'block';
+                    displayTopEmployees();
+                    // 在页面加载时获取近七天打卡总人数并显示
+                    document.addEventListener('DOMContentLoaded', function() {
+                        fetch('/recent-checkin-count')
+                            .then(response => response.json())
+                            .then(data => {
+                                // 处理返回的数据
+                                const recentCheckinCount = data.map(entry => {
+                                    const date = new Date(entry.date).toLocaleDateString();
+                                    return `${date}: ${entry.count}人`;
+                                });
 
+                                // 将统计结果显示在页面上
+                                document.getElementById('recentCheckinCount').innerHTML = `<p>${recentCheckinCount.join('<br>')}</p>`;
+                            })
+                            .catch(error => console.error('Error:', error));
+                    });
                     // 设置签到码标签文本
                     const codeLabel = document.querySelector('label[for="code"]');
                     if (codeLabel) {
                         codeLabel.innerText = '设置新的校验码：';
                     }
 
-                    displayTopEmployees();
                 }
             })
             .catch(error => console.error('Error:', error));
