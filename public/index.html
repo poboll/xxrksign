@@ -215,21 +215,20 @@
                     document.getElementById('updateButton').style.display = 'block';
                     displayTopEmployees();
                     // 在页面加载时获取近七天打卡总人数并显示
-                    document.addEventListener('DOMContentLoaded', function() {
-                        fetch('/recent-checkin-count')
-                            .then(response => response.json())
-                            .then(data => {
-                                // 处理返回的数据
-                                const recentCheckinCount = data.map(entry => {
-                                    const date = new Date(entry.date).toLocaleDateString();
-                                    return `${date}: ${entry.count}人`;
-                                });
+                    fetch('/recent-checkin-count')
+                        .then(response => response.json())
+                        .then(data => {
+                            // 处理返回的数据
+                            const recentCheckinCount = data.map(entry => {
+                                const date = new Date(entry.date).toLocaleDateString();
+                                return `${date}: ${entry.count}人`;
+                            });
 
-                                // 将统计结果显示在页面上
-                                document.getElementById('recentCheckinCount').innerHTML = `<p>${recentCheckinCount.join('<br>')}</p>`;
-                            })
-                            .catch(error => console.error('Error:', error));
-                    });
+                            // 将统计结果显示在页面上
+                            document.getElementById('recentCheckinCount').innerHTML = `<p>${recentCheckinCount.join('<br>')}</p>`;
+                        })
+                        .catch(error => console.error('Error:', error));
+
                     // 设置签到码标签文本
                     const codeLabel = document.querySelector('label[for="code"]');
                     if (codeLabel) {
