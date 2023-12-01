@@ -251,6 +251,8 @@ app.get('/top-employees', async (req, res) => {
         const startOfMonth = new Date();
         startOfMonth.setDate(1);
 
+        // console.log('本月初日期：', startOfMonth);
+
         const [rows] = await connection.query(`
             SELECT name, COUNT(*) as count
             FROM employees
@@ -259,6 +261,8 @@ app.get('/top-employees', async (req, res) => {
             ORDER BY count DESC
             LIMIT 10;
         `, [startOfMonth]);
+
+        // console.log('前十名员工查询结果：', rows);
 
         // 将前10名员工信息发送给前端
         res.json(rows);
