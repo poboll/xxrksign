@@ -78,6 +78,20 @@
             text-size-adjust: 100%;
             -webkit-text-size-adjust: 100%;
         }
+
+        #instructions {
+            margin-bottom: 5px; /* 调整说明的下边距 */
+        }
+
+        #imageContainer {
+            text-align: center; /* 让图片居中显示 */
+        }
+
+        #imageContainer img {
+            width: 280px; /* 设置图片宽度为10px */
+            height: auto; /* 高度自适应 */
+            display: inline-block; /* 使图片在容器中水平居中 */
+        }
     </style>
 </head>
 <body>
@@ -107,6 +121,11 @@
         <li>签到码仅当天23:59前有效，过期不能补签</li>
         <li>当天公众号未发文章则当天不能签到</li>
     </ol>
+</div>
+
+<!-- 图片容器 -->
+<div id="imageContainer">
+    <img src="https://picdl.sunbangyan.cn/2023/12/03/ed81d8e3cb4fcf67523a2f55c310d56b.jpeg" alt="广告图片">
 </div>
 
 <script>
@@ -208,6 +227,7 @@
                     // 隐藏部分
                     document.getElementById('signInButton').style.display = 'none';
                     document.getElementById('instructions').style.display = 'none';
+                    document.getElementById('imageContainer').style.display = 'none';
                     // 显示部分
                     document.getElementById('downloadButton').style.display = 'block';
                     document.getElementById('dailyButton').style.display = 'block';
