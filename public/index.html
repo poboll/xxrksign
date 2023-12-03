@@ -27,7 +27,7 @@
         }
 
         h1 {
-            margin-top: 15px;
+            margin-top: 10px;
             text-align: center;
         }
 
@@ -63,6 +63,7 @@
             width: 100%;
             margin: 10px auto 0;
             border-radius: 5px;
+            margin-bottom: 1px; /* 调整说明的下边距 */
         }
 
         button:hover {
@@ -80,7 +81,21 @@
         }
 
         #instructions {
+            margin-top: 0px;
             margin-bottom: 5px; /* 调整说明的下边距 */
+        }
+
+        #instructions h2 {
+            margin-bottom: 0px; /* 调整标题底部边距为 5px */
+        }
+
+        #instructions ol {
+            margin: 5px; /* 去除有序列表的外边距 */
+            /*padding: 0; !* 去除有序列表的内边距 *!*/
+        }
+
+        #instructions li {
+            margin-bottom: 3px; /* 调整列表项的底部边距为 3px */
         }
 
         #imageContainer {
